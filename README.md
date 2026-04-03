@@ -59,6 +59,7 @@ This project demonstrates the **complete fundamentals of Stellar Web3 developmen
 The entire app is **pure HTML + CSS + JavaScript** loaded via CDN. No Node.js, no npm, no Webpack — just clone and serve.
 
 > **Tip Jar Address:** `GC5HWVXWVVDDTHOFGGJBVEYQQ4GOHJ63T3ZN3NT3MJLR2IVTQLJ7ZDP5`
+>here it is : https://rohit-tiwari9.github.io/stellar-tip--jar/
 
 ---
 
