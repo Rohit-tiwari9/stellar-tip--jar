@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Tip Jar · Testnet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <!-- Stellar SDK — pinned stable build -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/12.3.0/stellar-sdk.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ░░ BACKGROUND CANVAS ░░ -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- ░░ APP SHELL ░░ -->
+<div class="app">
+
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="brand">
+      <svg class="brand-star" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L14.4 9.6H22L16 14.4L18.4 22L12 17.2L5.6 22L8 14.4L2 9.6H9.6L12 2Z" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">Stellar Tip Jar</span>
+      <span class="brand-net">TESTNET</span>
+    </div>
+    <div class="nav-right">
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Not Connected</span>
+      </div>
+      <button class="wallet-btn" id="walletBtn" onclick="handleWalletButton()">
+        <span id="walletBtnLabel">Connect Wallet</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- WALLET INFO BAR (shown after connect) -->
+  <div class="info-bar" id="infoBar">
+    <div class="info-item">
+      <span class="info-label">Address</span>
+      <span class="info-val mono" id="infoAddress">—</span>
+      <button class="icon-btn" onclick="copyAddress()" title="Copy full address">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm0 1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V4a1 1 0 00-1-1H4z"/><path d="M2 12V5h1v7a1 1 0 001 1h7v1H4a2 2 0 01-2-2z"/></svg>
+      </button>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-item">
+      <span class="info-label">Balance</span>
+      <span class="info-val" id="infoBalance">—</span>
+      <button class="icon-btn" onclick="fetchBalance()" title="Refresh balance">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 104.546 2.914.5.5 0 00-.908-.417A4 4 0 118 4V3z"/><path d="M8 1.5a.5.5 0 01.5.5v3a.5.5 0 01-1 0V2a.5.5 0 01.5-.5z"/></svg>
+      </button>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-item">
+      <span class="info-label">Network</span>
+      <span class="info-val green">Testnet</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+      <div class="hero-badge">White Belt · Level 1</div>
+      <h1 class="hero-title">Support with<br/><em>Stellar XLM</em></h1>
+      <p class="hero-sub">Instant, feeless tips on the Stellar testnet.<br/>Connect your Freighter wallet and tip in seconds.</p>
+    </section>
+
+    <!-- ── FREIGHTER DETECTION ALERT ── -->
+    <div class="alert-box" id="freighterAlert" style="display:none">
+      <div class="alert-icon">⚠</div>
+      <div class="alert-body">
+        <strong>Freighter Wallet Not Detected</strong>
+        <p>Install the Freighter browser extension to use this dApp.</p>
+        <a href="https://www.freighter.app/" target="_blank" rel="noopener" class="alert-link">
+          Install Freighter →
+        </a>
+      </div>
+    </div>
+
+    <!-- ── TIP JAR CARD ── -->
+    <div class="card tip-card" id="tipCard">
+
+      <!-- QR Code Section -->
+      <div class="qr-section">
+        <div class="qr-frame">
+          <canvas id="qrCanvas" width="160" height="160"></canvas>
+          <div class="qr-label">Scan to get address</div>
+        </div>
+        <div class="jar-address">
+          <span class="jar-addr-label">Tip Jar Address</span>
+          <span class="jar-addr-val mono" id="jarAddrDisplay">—</span>
+          <button class="copy-addr-btn" onclick="copyJarAddress()">Copy</button>
+        </div>
+      </div>
+
+      <!-- Tip Amount Buttons -->
+      <div class="tip-section">
+        <div class="tip-section-label">Choose an amount</div>
+        <div class="tip-grid">
+          <button class="tip-btn" data-amount="1" onclick="selectAmount(1)">
+            <span class="tip-xlm">1</span>
+            <span class="tip-unit">XLM</span>
+            <span class="tip-desc">Coffee ☕</span>
+          </button>
+          <button class="tip-btn hot" data-amount="5" onclick="selectAmount(5)">
+            <span class="hot-tag">🔥 Most Tipped</span>
+            <span class="tip-xlm">5</span>
+            <span class="tip-unit">XLM</span>
+            <span class="tip-desc">Lunch 🍜</span>
+          </button>
+          <button class="tip-btn" data-amount="10" onclick="selectAmount(10)">
+            <span class="tip-xlm">10</span>
+            <span class="tip-unit">XLM</span>
+            <span class="tip-desc">Dinner 🍣</span>
+          </button>
+          <button class="tip-btn" data-amount="25" onclick="selectAmount(25)">
+            <span class="tip-xlm">25</span>
+            <span class="tip-unit">XLM</span>
+            <span class="tip-desc">Legend 💎</span>
+          </button>
+        </div>
+
+        <!-- Custom Amount -->
+        <div class="custom-row">
+          <div class="custom-input-wrap">
+            <input
+              type="number"
+              id="customAmt"
+              class="custom-input"
+              placeholder="Custom amount…"
+              min="0.0000001"
+              step="any"
+              oninput="onCustomInput(this.value)"
+            />
+            <span class="custom-suffix">XLM</span>
+          </div>
+        </div>
+
+        <!-- Selected amount display -->
+        <div class="selected-row" id="selectedRow" style="display:none">
+          <span class="selected-label">Sending</span>
+          <span class="selected-amt" id="selectedAmt">—</span>
+          <span class="selected-unit">XLM</span>
+        </div>
+
+        <!-- Memo -->
+        <div class="memo-row">
+          <input type="text" id="memoInput" class="memo-input" placeholder="Add a message (optional)" maxlength="28" />
+        </div>
+
+        <!-- Send Button -->
+        <button class="send-btn" id="sendBtn" onclick="sendTip()" disabled>
+          <span id="sendBtnContent">
+            <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Connect Wallet to Tip
+          </span>
+        </button>
+
+        <!-- Tx Feedback -->
+        <div id="txFeedback" class="tx-feedback" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ── TRANSACTION HISTORY ── -->
+    <div class="card history-card" id="historyCard" style="display:none">
+      <div class="card-head">
+        <h3 class="card-title">Recent Transactions</h3>
+        <button class="refresh-hist-btn" onclick="loadHistory()">↻ Refresh</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+
+    <!-- ── HOW IT WORKS ── -->
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <div class="how-body">
+          <strong>Install Freighter</strong>
+          <p>Get the Freighter browser extension from freighter.app</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <div class="how-body">
+          <strong>Fund on Testnet</strong>
+          <p>Use Friendbot at laboratory.stellar.org to get 10,000 free XLM</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <div class="how-body">
+          <strong>Connect &amp; Tip</strong>
+          <p>Click Connect Wallet, pick an amount, and send instantly</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>Built on Stellar Testnet · White Belt Level 1</span>
+    <a href="https://stellar.expert/explorer/testnet" target="_blank" rel="noopener">Explorer ↗</a>
+    <a href="https://www.freighter.app/" target="_blank" rel="noopener">Freighter ↗</a>
+  </footer>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
